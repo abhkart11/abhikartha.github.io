@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Scroll Sync</title>
+ 
+  <link rel="stylesheet" type="text/css" href="css/style.css"></link>
+</head>
+
+<body>
+<br><br><br><br><br><br><br><br>
+<h1 style="text-align: center; "><a style="text-decoration: none; color: white;" href="abhi.html"> abhiram kartha</a></h1>
+
+<div class="space"></div>
+<h1><a href="works.html">works</a></h1>
+<div class="space"></div>
+<h1><a href="cv.html"> cv</a></h1>
+<div class="space"></div>
+<h1 class="last-section"><a href="contact.html"> contact</a></h1>
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- Placeholder for scrollable height -->
+  <div id="set-height"></div>
+
+  <!-- Video element -->
+  <video id="v0" preload="auto" muted>
+    <source type="video/mp4" src="web3.mp4">
+  </video>
+
+  <script>
+    const playbackConst = 250; // Adjust to control scroll-to-video mapping (lower for smaller intervals)
+    const setHeight = document.getElementById("set-height");
+    const vid = document.getElementById("v0");
+
+    let isScrolling = false; // Tracks scrolling state
+    let scrollTimeout; // For debounce after scrolling stops
+    let lastScrollY = 0; // To track the scroll position
+    let targetTime = 0; // The target video time based on scroll position
+    let lastUpdateTime = 0; // To track the last update time (for controlling frame skipping)
+
+    // Dynamically set the page height based on video duration
+    vid.addEventListener("loadedmetadata", () => {
+      setHeight.style.height = `${Math.floor(vid.duration * playbackConst)}px`;
+      vid.currentTime = 0;
+      vid.pause();
+    });
+
+    // Smooth frame updates with direct mapping of scroll delta to frame changes
+    function handleScroll() {
+      isScrolling = true;
+
+      const maxScrollY = setHeight.offsetHeight - window.innerHeight;
+      const currentScrollY = window.scrollY;
+
+      // Calculate the delta scroll amount (how far the user has scrolled)
+      const deltaScroll = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+
+      // Calculate target video time based on scroll position
+      targetTime += deltaScroll / playbackConst; // Update target time smoothly
+      if (targetTime < 0) targetTime = 0; // Prevent negative time
+      if (targetTime > vid.duration) targetTime = vid.duration; // Prevent exceeding video duration
+
+      // Only update the video frame if enough time has passed (to avoid skipping frames)
+      const currentTime = performance.now();
+      const timeDiff = currentTime - lastUpdateTime;
+
+      if (timeDiff > 16) { // 16ms = 60fps, adjust for smoother frame rate
+        // Update video time directly for smooth playback
+        vid.currentTime = targetTime;
+        lastUpdateTime = currentTime;
+      }
+
+      // Pause the video shortly after scrolling stops
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+        vid.pause();
+      }, 10); // Adjust delay as needed
+    }
+
+    // Attach the scroll event listener
+    window.addEventListener("scroll", () => {
+      if (vid.paused) vid.play(); // Start playing video when scrolling starts
+      handleScroll(); // Call the scroll handler to update the video
+    });
+
+    // Pause the video initially
+    vid.pause();
+  </script>
+
+</body>
+
+</html>
